@@ -2,10 +2,7 @@ package net.mikc.evolution.creatures;
 
 import com.jme3.math.FastMath;
 import net.mikc.evolution.demos.CarRacerDemo;
-import net.mikc.evolution.gfx.ColorRGBA;
-import net.mikc.evolution.gfx.GfxInternals;
-import net.mikc.evolution.gfx.MaterialBuilder;
-import net.mikc.evolution.gfx.RayCollision;
+import net.mikc.evolution.gfx.*;
 import net.mikc.evolution.neuralnets.NeuralNetwork;
 
 import java.util.Random;
@@ -36,7 +33,7 @@ public class Racer implements ICreature {
         this.dead = false;
         this.distanceTravelled = 0;
         this.sensors = new float[9];
-        this.angle = rnd.nextFloat();
+//        this.angle = rnd.nextFloat();
         age = 0;
     }
 
@@ -65,6 +62,24 @@ public class Racer implements ICreature {
         return brain;
     }
 
+    public void accelerate() {
+        velocity+=0.05f;
+        if(velocity>MAX_VELOCITY) velocity=MAX_VELOCITY;
+    }
+
+    public void decelerate() {
+        velocity-=0.05f;
+        if(velocity<0) velocity=0;
+    }
+
+    public void steerRight() {
+        if (velocity > 0) angle += 0.1f;
+    }
+
+    public void steerLeft() {
+        if (velocity > 0) angle -= 0.1f;
+    }
+
     @Override
     public void doAction(int action) {
         if (dead) {
@@ -72,26 +87,24 @@ public class Racer implements ICreature {
         }
         switch (action) {
             case 0:
-                if (velocity > 0) angle += 0.1f;
+                steerRight();
                 break;
             case 1:
-                if (velocity > 0) angle -= 0.1f;
+                steerLeft();
                 break;
             case 2:
-                velocity += 0.05f;
-                if (velocity > MAX_VELOCITY) velocity = MAX_VELOCITY;
+                accelerate();
                 break;
             case 3:
-                velocity -= 0.05f;
-                if (velocity < 0) velocity = 0f;
+                decelerate();
                 break;
         }
         float vx = velocity * (float) Math.cos(angle);
         float vz = velocity * (float) Math.sin(angle);
         x += vx;
         z -= vz;
-//        distanceTravelled += Math.sqrt(vx * vx + vz * vz);
-        distanceTravelled = (float)Math.sqrt(x*x + z*z);
+        distanceTravelled += Math.sqrt(vx * vx + vz * vz);
+//        distanceTravelled = (float)Math.sqrt(x*x + z*z);
     }
 
     @Override
@@ -104,15 +117,14 @@ public class Racer implements ICreature {
     public float[] getSensorInputs() {
         int j=0;
         for (float i = angle - FastMath.PI / 4; i < angle + FastMath.PI / 4; i += FastMath.PI / 16) {
-            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y+0.1f, z,x + 1 * (float) Math.cos(i), y+0.1f, z - 1 * (float) Math.sin(i) );
+            float tx = x + 10 * (float) Math.cos(i);
+            float tz = z - 10 * (float) Math.sin(i);
+            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y+0.1f, z,tx-x, 0f, tz - z );
             float dist = collision.getDistance();
-//            System.out.println("dist="+dist);
-            if(dist>0 && dist<1.0f) {
-//                System.out.println("KILL");
+            if(dist>0 && dist<.55f) {
                 kill();
             }
-//            System.out.println("j="+j);
-            sensors[j++] = collision.isCollision() ? getDistanceForSensors(dist) : 1000.0f;
+            sensors[j++] = collision.isCollision() ? dist : 100.0f;
         }
        return sensors;
     }
@@ -148,11 +160,35 @@ public class Racer implements ICreature {
                 .ambient(ColorRGBA.fromFloats(0.577273f, 0.577273f, 0.577273f, 1.0f))
                 .diffuseTexture("assets/Models/911/_PORSCHE.png");
         gfx.drawModel(id, "assets/Models/911/911.obj", x, y, z, 0.1f, porscheMat);
+        if(drawBrain) {
+            drawSensors(gfx);
+        }
 
         gfx.rotateAroundY(id, angle);
     }
 
-    private float getDistanceForSensors(float dist) {
-        return dist>0 && dist<15.0f ? dist : 0f;
+    private void drawSensors(GfxInternals gfx) {
+        for (float i = angle - FastMath.PI / 4; i < angle + FastMath.PI / 4; i += FastMath.PI / 16) {
+            float tx = x + 10 * (float) Math.cos(i);
+            float tz = z - 10 * (float) Math.sin(i);
+            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y+0.1f, z, tx-x, 0.0f, tz-z );
+            Vec3f collisionPoint = collision.getPoint();
+            float dist = collision.getDistance();
+//            System.out.println("dist="+dist);
+            if(dist<0) dist = 100.0f;
+            if(dist>0 && dist<0.55f) {
+//                System.out.println("KILL");
+                gfx.line(x, y+0.1f, z,tx, y+0.1f, tz, 255, 0, 0, 255);
+            }
+            else {
+                gfx.line(x, y+0.1f, z,tx, y+0.1f, tz, 0, 255, 0, 255);
+            }
+            gfx.text(dist, 1, tx, y+1f, tz);
+            if(collision.isCollision()) {
+                gfx.cube(collisionPoint.getX(), collisionPoint.getY(), collisionPoint.getZ(), 0.2f, 0, 0, 255, 255);
+            }
+//            System.out.println("j="+j);
+//            sensors[j++] = collision.isCollision() ? getDistanceForSensors(dist) : 1000.0f;
+        }
     }
 }

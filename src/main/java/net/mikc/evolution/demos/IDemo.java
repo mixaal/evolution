@@ -11,4 +11,6 @@ public interface IDemo {
     void drawPlayground(GfxInternals g);
     void oneStep(float age);
     List<ICreature> getPopulation();
+    void update(GfxInternals gfx, boolean firstTime, boolean reset);
+    void initialize(GfxInternals gfx);
 }

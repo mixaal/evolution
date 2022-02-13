@@ -36,10 +36,14 @@ public class SillyCreaturesDemo extends GeneticEvolution implements IDemo {
             .dense(4, Activation.SOFTMAX);
 
     private final SelectionCriteria selectionCriteria;
+    private final int generations;
+    private final int viewPopulationSize;
 
-    public SillyCreaturesDemo(int populationSize, SelectionCriteria criteria) {
+    public SillyCreaturesDemo(int generations, int populationSize, int viewPopulationSize, SelectionCriteria criteria) {
         super(populationSize, 300, () -> new SillyCreature(accurateBrain.build(), MathUtils.rnd(), MathUtils.rnd()));
+        this.generations = generations;
         this.selectionCriteria = criteria;
+        this.viewPopulationSize = viewPopulationSize;
     }
 
     @Override
@@ -89,5 +93,37 @@ public class SillyCreaturesDemo extends GeneticEvolution implements IDemo {
     public void drawPlayground(GfxInternals gfx) {
         gfx.cube(0, -1, 0, 24, 0.1f, 24, 255, 255, 255, 255);
         gfx.cylinder(0, -0.2f, 0, 12, 0.1f, 255, 0, 0, 255);
+    }
+
+    @Override
+    public void update(GfxInternals gfx, boolean firstTime, boolean reset) {
+        long fps = gfx.getFps();
+        if (fps == 0) selectNewPopulation(viewPopulationSize);
+        if (fps > 3000) {
+            gfx.clear();
+            drawPlayground(gfx);
+            fps = 0;
+            selectNewPopulation(viewPopulationSize);
+        }
+        fps++;
+
+        oneStep(0.5f);
+        int i = 0;
+        for (ICreature creature : getPopulation()) {
+            i++;
+            creature.draw(gfx, (i % 100) == 0);
+        }
+    }
+
+    @Override
+    public void initialize(GfxInternals gfx) {
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < generations; i++) {
+            generation();
+            System.out.println("Generation #" + i);
+        }
+        long end = System.currentTimeMillis();
+        long ms = end - start;
+        System.out.println("Total time: " + ms / 1000);
     }
 }

@@ -4,6 +4,7 @@ import com.jme3.asset.AssetManager;
 import com.jme3.collision.CollisionResults;
 import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
+import com.jme3.input.InputManager;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.*;
@@ -24,17 +25,32 @@ public class GfxInternals {
     private final AssetManager assetManager;
     private final Node parent;
     private final List<GfxInternals> linkedGfxInternals;
+    private final InputManager inputManager;
 
     public final List<Spatial> registered = new ArrayList<>();
+    private long fps = 0;
 
-    public GfxInternals(AssetManager assetManager, Node parent) {
+    public GfxInternals(AssetManager assetManager, InputManager inputManager, Node parent) {
+        this.inputManager = inputManager;
         this.assetManager = assetManager;
         this.parent = parent;
         this.linkedGfxInternals = new ArrayList<>();
     }
 
+    public void setFps(long fps) {
+        this.fps = fps;
+    }
+
+    public long getFps() {
+        return fps;
+    }
+
+    public InputManager getInputManager() {
+        return inputManager;
+    }
+
     public GfxInternals cloneWithCustomParent(Node customParent) {
-        GfxInternals childGfx =  new GfxInternals(assetManager, customParent);
+        GfxInternals childGfx =  new GfxInternals(assetManager, inputManager, customParent);
         linkedGfxInternals.add(childGfx);
         return childGfx;
     }
@@ -81,14 +97,26 @@ public class GfxInternals {
         return m;
     }
 
-    public static RayCollision collisionWithRayDistance(Mesh mesh, float x1, float y1, float z1, float x2, float y2, float z2) {
+    /**
+     * Make a collision of ray with target mesh.
+     *
+     * @param mesh mesh to collide with
+     * @param x1      source ray point x coordinate
+     * @param y1      source ray point y coordinate
+     * @param z1      source ray point z coordinate
+     * @param vectorX ray vector x coordinate
+     * @param vectorY ray vector y coordinate
+     * @param vectorZ ray vector z coordinate
+     * @return ray collision structure containing distance and collision point
+     */
+    public static RayCollision collisionWithRayDistance(Mesh mesh, float x1, float y1, float z1, float vectorX, float vectorY, float vectorZ) {
         Spatial spatial = mesh.getModel();
         if( spatial == null) {
             return new RayCollision(false, -1f, null);
         }
 
         CollisionResults results = new CollisionResults();
-        Ray ray = new Ray(new Vector3f(x1, y1, z1), new Vector3f(x2, y2, z2));
+        Ray ray = new Ray(new Vector3f(x1, y1, z1), new Vector3f(vectorX, vectorY, vectorZ));
         spatial.collideWith(ray, results);
         if(results.size() > 0) {
             Vector3f point = results.getClosestCollision().getContactPoint();
