@@ -1,0 +1,14 @@
+# Blender MTL File: '911.blend'
+# Material Count: 1
+
+newmtl _PORSCHE
+Ns 699.606274
+Ka 0.577273 0.577273 0.577273
+Kd 1.000000 1.000000 1.000000
+Ks 0.554545 0.554545 0.554545
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd _PORSCHE.png
+map_d _PORSCHE.png
