@@ -1,8 +1,17 @@
 package net.mikc.evolution.neuralnets;
 
+import com.google.common.primitives.Floats;
+import com.google.gson.Gson;
 import net.mikc.evolution.gfx.GfxInternals;
+import net.mikc.evolution.neuralnets.layers.Dense;
 import net.mikc.evolution.neuralnets.layers.ILayer;
+import net.mikc.evolution.neuralnets.serialization.SerializedLayer;
+import net.mikc.evolution.neuralnets.serialization.SerializedNeuralNet;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +28,65 @@ public class NeuralNetwork {
     }
     public NeuralNetwork(List<ILayer> layers) {
         this(layers, false);
+    }
+
+
+    /**
+     * Save neural network to file.
+     *
+     * @param filename filename to save the network
+     */
+    public void save(String filename) {
+        final Gson gson = new Gson();
+        List<SerializedLayer> serializedLayers = new ArrayList<>();
+        for(ILayer layer: layers) {
+            List<Float> weights = new ArrayList<>();
+            if(layer.getWeights()!=null) {
+                for (float w : layer.getWeights()) {
+                    weights.add(w);
+                }
+            } else {
+                weights = null;
+            }
+            serializedLayers.add(new SerializedLayer(layer.getNumberOfNeurons(), layer.getActivation(), weights));
+        }
+        SerializedNeuralNet snn = new SerializedNeuralNet(serializedLayers);
+        String serialized = gson.toJson(snn);
+
+        try {
+            Files.write( Paths.get(filename), serialized.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Load nerual network from file.
+     *
+     * @param filename filename where the neural network is stored.
+     * @return neural network instance
+     */
+    public static NeuralNetwork load(String filename) {
+        try {
+            Gson gson = new Gson();
+            String content = new String ( Files.readAllBytes( Paths.get(filename) ) );
+            SerializedNeuralNet snn = gson.fromJson( content, SerializedNeuralNet.class );
+            List<ILayer> layers = new ArrayList<>();
+            for(SerializedLayer serializedLayer: snn.getLayers()) {
+                float []weights = Floats.toArray(serializedLayer.getWeights());
+                Dense currentLayer = new Dense(serializedLayer.getNumberOfNeurons(), serializedLayer.getActivation(),  weights);
+                layers.add(currentLayer);
+
+            }
+            return new NeuralNetwork(layers, true);
+
+        }
+        catch (IOException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
     }
 
     private static ILayer[] copy(ILayer layers[]) {

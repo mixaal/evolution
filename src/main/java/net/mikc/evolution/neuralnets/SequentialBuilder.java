@@ -11,7 +11,7 @@ public class SequentialBuilder {
     private List<ILayer> layers = new ArrayList<>();
 
     public SequentialBuilder input(int N, Activation activation) {
-        layers.add(new Dense(N, activation, null));
+        layers.add(new Dense(N, activation, (ILayer)null));
         return this;
     }
 

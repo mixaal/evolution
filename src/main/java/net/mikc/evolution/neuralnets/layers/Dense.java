@@ -8,7 +8,7 @@ public class Dense implements ILayer {
     private final int numberOfNeurons;
     private final Activation activation;
 
-    private Dense(final int N, final Activation activation, float weights[]){
+    public Dense(final int N, final Activation activation, float weights[]){
         this.numberOfNeurons = N;
         if(weights==null) {
             this.weights = weights;

@@ -72,11 +72,22 @@ public abstract class GeneticEvolution {
         while(currentSize++<newPopulationSize) {
             alive.add(creatureSupplier.get());
         }
-        // Mutate everything together
+
+        // best creatures selection
+        List<ICreature> bestCreatures = new ArrayList<>();
+        bestCreatures.add(alive.get(0));
+        bestCreatures.add(alive.get(1));
+        bestCreatures.add(alive.get(2));
+        // save creatures
+        for(int k=0; k<bestCreatures.size(); k++) {
+            bestCreatures.get(k).getBrain().save("best-"+k+".nn");
+        }
+
+        // Mutate everything together and include the best creatures
         List<ICreature> newPopulation = new ArrayList<>();
-        newPopulation.add(alive.get(0)); // copy best man
+        newPopulation.addAll(bestCreatures);
         if(newPopulationSize>1) {
-            for (int i = 1; i < newPopulationSize/2; i++) {
+            for (int i = bestCreatures.size(); i < newPopulationSize/2; i++) {
 
                 int i1 = random.nextInt(alive.size());
                 int i2 = random.nextInt(alive.size());
