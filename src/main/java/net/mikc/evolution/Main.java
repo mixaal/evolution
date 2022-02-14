@@ -23,7 +23,7 @@ public class Main extends SimpleApplication {
 
     public Main() {
         //this.demo = new SillyCreaturesDemo(100000, SillyCreaturesDemo.SelectionCriteria.KILL_OUT_OF_CIRCLE_AROUND_CENTER);
-        this.demo = new CarRacerDemo(GENERATIONS, POPULATION_SZ, VIEW_POPULATION_SZ, false);
+        this.demo = new CarRacerDemo(GENERATIONS, POPULATION_SZ, VIEW_POPULATION_SZ, true);
     }
     public static void main(String []args) {
         new Main().start();
@@ -64,24 +64,5 @@ public class Main extends SimpleApplication {
         }
         demo.update(gfx, firstTime, reset);
         firstTime = false;
-
-
-//        if(fps==0) demo.selectNewPopulation(VIEW_POPULATION_SZ);
-//        if(fps>3000) {
-//            gfx.clear();
-//            demo.drawPlayground(gfx);
-//            fps=0;
-//            demo.selectNewPopulation(VIEW_POPULATION_SZ);
-//        }
-//        fps++;
-//
-//        demo.oneStep(0.5f);
-//        int i = 0;
-//        for(ICreature creature: demo.getPopulation()) {
-//            i++;
-//            creature.draw(gfx, (i%100)==0);
-//        }
-//        System.out.println("i="+i);
-
     }
 }

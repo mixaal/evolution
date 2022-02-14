@@ -10,6 +10,7 @@ import net.mikc.evolution.genetics.GeneticEvolution;
 import net.mikc.evolution.gfx.GfxInternals;
 import net.mikc.evolution.gfx.MaterialBuilder;
 import net.mikc.evolution.gfx.Mesh;
+import net.mikc.evolution.neuralnets.NeuralNetwork;
 import net.mikc.evolution.neuralnets.SequentialBuilder;
 import net.mikc.evolution.neuralnets.layers.Activation;
 
@@ -43,7 +44,14 @@ public class CarRacerDemo extends GeneticEvolution implements IDemo {
         this.manualMode = manualMode;
         this.generations = generations;
         this.viewPopulationSize = viewPopulationSize;
-        this.car = manualMode ? new Racer(accurateBrain.build()) : null;
+        NeuralNetwork savedModel = null;
+        try {
+            savedModel = NeuralNetwork.load("best-0.nn");
+        }
+        catch (Throwable t) {
+            System.out.println("Model not found.");
+        }
+        this.car = manualMode ? new Racer(savedModel!=null ? savedModel : accurateBrain.build()) : null;
     }
 
     public void initialize(GfxInternals gfx) {

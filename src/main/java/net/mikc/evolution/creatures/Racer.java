@@ -1,6 +1,7 @@
 package net.mikc.evolution.creatures;
 
 import com.jme3.math.FastMath;
+import com.jme3.scene.Node;
 import net.mikc.evolution.demos.CarRacerDemo;
 import net.mikc.evolution.gfx.*;
 import net.mikc.evolution.neuralnets.NeuralNetwork;
@@ -63,13 +64,13 @@ public class Racer implements ICreature {
     }
 
     public void accelerate() {
-        velocity+=0.05f;
-        if(velocity>MAX_VELOCITY) velocity=MAX_VELOCITY;
+        velocity += 0.05f;
+        if (velocity > MAX_VELOCITY) velocity = MAX_VELOCITY;
     }
 
     public void decelerate() {
-        velocity-=0.05f;
-        if(velocity<0) velocity=0;
+        velocity -= 0.05f;
+        if (velocity < 0) velocity = 0;
     }
 
     public void steerRight() {
@@ -115,23 +116,23 @@ public class Racer implements ICreature {
 
     @Override
     public float[] getSensorInputs() {
-        int j=0;
+        int j = 0;
         for (float i = angle - FastMath.PI / 4; i < angle + FastMath.PI / 4; i += FastMath.PI / 16) {
             float tx = x + 10 * (float) Math.cos(i);
             float tz = z - 10 * (float) Math.sin(i);
-            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y+0.1f, z,tx-x, 0f, tz - z );
+            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y + 0.1f, z, tx - x, 0f, tz - z);
             float dist = collision.getDistance();
-            if(dist>0 && dist<.55f) {
+            if (dist > 0 && dist < .55f) {
                 kill();
             }
             sensors[j++] = collision.isCollision() ? dist : 100.0f;
         }
-       return sensors;
+        return sensors;
     }
 
     @Override
     public void setAge(float age) {
-        if(!dead) {
+        if (!dead) {
             this.age = age;
         }
     }
@@ -160,8 +161,9 @@ public class Racer implements ICreature {
                 .ambient(ColorRGBA.fromFloats(0.577273f, 0.577273f, 0.577273f, 1.0f))
                 .diffuseTexture("assets/Models/911/_PORSCHE.png");
         gfx.drawModel(id, "assets/Models/911/911.obj", x, y, z, 0.1f, porscheMat);
-        if(drawBrain) {
+        if (drawBrain) {
             drawSensors(gfx);
+            drawBrain(gfx);
         }
 
         gfx.rotateAroundY(id, angle);
@@ -171,24 +173,36 @@ public class Racer implements ICreature {
         for (float i = angle - FastMath.PI / 4; i < angle + FastMath.PI / 4; i += FastMath.PI / 16) {
             float tx = x + 10 * (float) Math.cos(i);
             float tz = z - 10 * (float) Math.sin(i);
-            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y+0.1f, z, tx-x, 0.0f, tz-z );
+            RayCollision collision = GfxInternals.collisionWithRayDistance(CarRacerDemo.mesh, x, y + 0.1f, z, tx - x, 0.0f, tz - z);
             Vec3f collisionPoint = collision.getPoint();
             float dist = collision.getDistance();
-//            System.out.println("dist="+dist);
-            if(dist<0) dist = 100.0f;
-            if(dist>0 && dist<0.55f) {
-//                System.out.println("KILL");
-                gfx.line(x, y+0.1f, z,tx, y+0.1f, tz, 255, 0, 0, 255);
+            if (dist < 0) dist = 100.0f;
+            if (dist > 0 && dist < 0.55f) {
+                gfx.line(x, y + 0.1f, z, tx, y + 0.1f, tz, 255, 0, 0, 255);
+            } else {
+                gfx.line(x, y + 0.1f, z, tx, y + 0.1f, tz, 0, 255, 0, 255);
             }
-            else {
-                gfx.line(x, y+0.1f, z,tx, y+0.1f, tz, 0, 255, 0, 255);
-            }
-            gfx.text(dist, 1, tx, y+1f, tz);
-            if(collision.isCollision()) {
+            gfx.text(dist, 1, tx, y + 1f, tz);
+            if (collision.isCollision()) {
                 gfx.cube(collisionPoint.getX(), collisionPoint.getY(), collisionPoint.getZ(), 0.2f, 0, 0, 255, 255);
             }
-//            System.out.println("j="+j);
-//            sensors[j++] = collision.isCollision() ? getDistanceForSensors(dist) : 1000.0f;
         }
+    }
+
+    private void drawBrain(GfxInternals gfx) {
+        float xx = x ;
+        float yy = y;
+        float zz = z;
+
+        brain.setSensorInputs(getSensorInputs());
+        brain.feedForward();
+
+        Node parent = gfx.getParent();
+        Node brainNode = new Node();
+        parent.attachChild(brainNode);
+        GfxInternals brainGfx = gfx.cloneWithCustomParent(brainNode);
+        brain.draw(brainGfx);
+        brainNode.move(xx, yy + 0.4f, zz);
+        brainNode.scale(0.2f);
     }
 }
